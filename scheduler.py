@@ -9,14 +9,17 @@ def runScheduler() :
     days_num = data['days_num']
     doctors_per_shift = data['doctors_per_shift']
     leave_requests = data['leave_requests']
-    leave_requests_dict = {}
+    preference_requests = data['preference_requests']
+    leave_requests_formatted = []
+    preference_requests_formatted = []
+
     for i in leave_requests :
-        leave_requests_dict[tuple(i)] = 1
+        leave_requests_formatted.append(tuple(i))
+    for k in preference_requests : 
+        preference_requests_formatted.append(tuple(k))
+        
+    print(doctor_num,shift_num,days_num,doctors_per_shift, leave_requests_formatted, preference_requests_formatted) # TODO: remove this
     
-    print(doctor_num,shift_num,days_num,doctors_per_shift, leave_requests_dict) # TODO: remove this
-    
-
-
     '''
     setting up the date for the problem. Different problem, different data. 
     '''
@@ -24,7 +27,8 @@ def runScheduler() :
     # shift_num = 3
     # days_num = 10
     # doctors_per_shift = 2
-    leave_requests = leave_requests_dict 
+    leave_requests = leave_requests_formatted
+    preference_requests = preference_requests_formatted  
 
     # sort of an ID for each one. 
     all_doctors = range(doctor_num) 
@@ -34,10 +38,11 @@ def runScheduler() :
     #create model 
     model = cp_model.CpModel() 
 
-    '''
+    """
         problem: representing a solution 
         solution: solution is a set of tuples where (n,d,s) = 1 if nth doctor is assigned to sth shift on dth day.
-    '''
+    """
+
     shifts = {}
     for n in all_doctors :
         for d in all_days :
@@ -54,14 +59,15 @@ def runScheduler() :
         for s in all_shifts : 
             model.Add(sum(shifts[(n,d,s)] for n in all_doctors) == doctors_per_shift)
 
+    #constraint: include preference requests
 
+    for key in preference_requests :
+        model.Add(shifts[key] == 1)
 
     #constraint: include leave requests
 
-    for n in all_doctors : 
-        for d in all_days :
-            for s in all_shifts : 
-                model.Add(shifts[(n,d,s)] + leave_requests.get((n,d,s),0) <= 1) 
+    for key in leave_requests :
+        model.Add(shifts[key] == 0)
 
 
     #constraint: at most one shift per doctor per day 
@@ -144,14 +150,20 @@ def runScheduler() :
                                                     solution_limit)
 
     solver.Solve(model, solution_printer) 
-    print(solution_printer._solution_output)
+
+    if solution_printer._solution_output == [] :
+        print("No solutions!")
+        return {"message": "no model found"}, 422
+    else :
+        print(solution_printer._solution_output)
+        return {"message": "Scheduler is running", "result": solution_printer._solution_output}, 200
 
 
 
 
     
 
-    return {"message": "Scheduler is running", "result": solution_printer._solution_output}, 200 
+     
 
 
 
