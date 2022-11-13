@@ -158,23 +158,6 @@ def runScheduler() :
         print(solution_printer._solution_output)
         return {"message": "Scheduler is running", "result": solution_printer._solution_output}, 200
 
-
-
-
-    
-
-     
-
-
-
-
-
-
-
-
-
-
-
 def getVariablees() -> dict : 
 
     variables = {}
