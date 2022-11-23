@@ -10,6 +10,7 @@ def runScheduler() :
     doctors_per_shift = data['doctors_per_shift']
     leave_requests = data['leave_requests']
     preference_requests = data['preference_requests']
+    maxShifts = data['max_shifts']
     leave_requests_formatted = []
     preference_requests_formatted = []
 
@@ -72,9 +73,15 @@ def runScheduler() :
 
     #constraint: at most one shift per doctor per day 
 
+    # for n in all_doctors :
+    #     for d in all_days : 
+    #         model.AddAtMostOne(shifts[(n,d,s)] for s in all_shifts)
+
+    #constraint: at most maxShift number of shifts per day
+
     for n in all_doctors :
         for d in all_days : 
-            model.AddAtMostOne(shifts[(n,d,s)] for s in all_shifts)
+            model.Add(sum(shifts[(n,d,s)] for s in all_shifts) <= maxShifts)
 
     #assign shifts evenly. each should have less than maximum and more than minimum, max min values are 
 
@@ -157,23 +164,6 @@ def runScheduler() :
     else :
         print(solution_printer._solution_output)
         return {"message": "Scheduler is running", "result": solution_printer._solution_output}, 200
-
-
-
-
-    
-
-     
-
-
-
-
-
-
-
-
-
-
 
 def getVariablees() -> dict : 
 
